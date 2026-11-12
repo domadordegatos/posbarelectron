@@ -1,0 +1,1355 @@
+:root {
+  --pb-primary: #4f46e5;
+  --pb-primary-dark: #4338ca;
+  --pb-primary-light: #eef2ff;
+  --pb-success: #16a34a;
+  --pb-danger: #dc2626;
+  --pb-warning: #d97706;
+  --pb-bg: #f4f5f9;
+  --pb-surface: #ffffff;
+  --pb-border: #e5e7eb;
+  --pb-text: #1f2333;
+  --pb-text-muted: #6b7280;
+  --pb-sidebar-bg: #14162b;
+  --pb-sidebar-text: #c7c9d9;
+  --pb-sidebar-active: #4f46e5;
+  --pb-radius: 0.65rem;
+  --pb-shadow: 0 1px 2px rgba(16, 17, 27, 0.06), 0 4px 12px rgba(16, 17, 27, 0.06);
+}
+
+body {
+  background-color: var(--pb-bg);
+  color: var(--pb-text);
+  font-family: "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+  min-height: 100vh;
+}
+
+/* ---------- Layout con sidebar ---------- */
+.pb-app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.pb-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--pb-sidebar-bg);
+  color: var(--pb-sidebar-text);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 20;
+  transition: transform 0.2s ease, width 0.22s ease;
+  /* Barra de scroll delgada y discreta (se nota solo si hace falta usarla) en vez de la gruesa del
+     sistema — Firefox la respeta con estas dos propiedades; Chromium/Electron con las de abajo. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.pb-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pb-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pb-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.pb-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.pb-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1.25rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pb-sidebar-brand svg,
+.pb-sidebar-brand i {
+  color: var(--pb-primary);
+  flex-shrink: 0;
+}
+
+.pb-sidebar-brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pb-sidebar-brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pb-sidebar-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  min-width: 0;
+  max-width: 170px;
+  overflow: hidden;
+  opacity: 1;
+  transition: max-width 0.2s ease, opacity 0.15s ease;
+}
+
+.pb-sidebar-brand-text span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Botón para fijar el panel abierto o contraído a mano (además del contraído automático por inactividad). */
+.pb-sidebar-pin {
+  display: none;
+}
+
+.pb-sidebar-brand-text small {
+  color: #8b8fb8;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.pb-login-brand {
+  text-align: center;
+  color: var(--pb-text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 1.5rem;
+}
+
+.pb-nav {
+  padding: 0.6rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  /* Espacio real entre enlaces, no solo visual — en pantalla táctil (el uso normal de la caja) un
+     hueco angosto entre dos íconos hace que se toque el de al lado por error. Esto es el nivel
+     "cómodo" (el de por defecto); si con TODOS los módulos activos no alcanza a caber sin scroll,
+     ajustarDensidadNav() en app.js prueba, EN ESE EQUIPO, los niveles más apretados de abajo — nunca
+     al revés: siempre se intenta primero lo más espacioso que quepa. */
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.pb-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  /* ~44px de alto (guía típica de objetivo táctil) para que cada enlace sea fácil de tocar sin fallar. */
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--pb-radius);
+  color: var(--pb-sidebar-text);
+  text-decoration: none;
+  font-size: 0.92rem;
+  line-height: 1;
+  position: relative;
+  /* Sin padding/gap aquí a propósito: el nivel de densidad se decide en JS al cargar la pantalla
+     (antes de que el usuario la vea), probando varios de un tirón — animarlos haría que, a mitad de
+     esa prueba, se leyera un padding a medio camino de la transición y diera una medida inconsistente. */
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.pb-nav-link span {
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 160px;
+  opacity: 1;
+  transition: max-width 0.2s ease, opacity 0.15s ease;
+}
+
+.pb-nav-link i {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  width: 1.2rem;
+  text-align: center;
+}
+
+/* Nivel intermedio: negocios con bastantes módulos activos, pantalla no muy alta. Sigue siendo
+   cómodo al tacto, solo un poco más ceñido que el de por defecto. La clase va en <html> (no en
+   .pb-sidebar): así head.php puede aplicarla ANTES de pintar, leyendo lo que se recordó de la
+   última vez en este equipo — igual que ya hace con el panel contraído — y no se ve "saltar" el
+   espaciado justo después de cargar cada pantalla. */
+html.pb-nav-cozy .pb-nav {
+  gap: 0.1rem;
+}
+
+html.pb-nav-cozy .pb-nav-link {
+  padding: 0.52rem 0.85rem;
+  font-size: 0.9rem;
+}
+
+html.pb-nav-cozy .pb-nav-link i {
+  font-size: 1.02rem;
+  width: 1.15rem;
+}
+
+/* Último recurso: solo si con TODO activo a la vez ni el nivel intermedio alcanza a caber. Sigue
+   siendo un objetivo tocable, ya no tan holgado como el de por defecto. */
+html.pb-nav-compact .pb-nav {
+  gap: 0.03rem;
+}
+
+html.pb-nav-compact .pb-nav-link {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.86rem;
+}
+
+html.pb-nav-compact .pb-nav-link i {
+  font-size: 0.96rem;
+  width: 1.1rem;
+}
+
+.pb-nav-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.pb-nav-link.active {
+  background: var(--pb-sidebar-active);
+  color: #fff;
+}
+
+.pb-nav-link svg {
+  flex-shrink: 0;
+}
+
+.pb-sidebar-footer {
+  padding: 0.65rem 1.1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.82rem;
+}
+
+.pb-sidebar-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pb-sidebar-user-info {
+  overflow: hidden;
+  max-width: 160px;
+  opacity: 1;
+  transition: max-width 0.2s ease, opacity 0.15s ease;
+}
+
+.pb-sidebar-user .pb-role-badge {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9ca3d4;
+}
+
+.pb-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #fca5a5;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.55rem 0.6rem;
+  border-radius: var(--pb-radius, 6px);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pb-logout-btn span {
+  overflow: hidden;
+  max-width: 60px;
+  opacity: 1;
+  transition: max-width 0.2s ease, opacity 0.15s ease;
+}
+
+.pb-logout-btn:hover,
+.pb-logout-btn:focus-visible {
+  color: #fecaca;
+  background: rgba(252, 165, 165, 0.12);
+}
+
+.pb-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pb-topbar {
+  background: var(--pb-surface);
+  border-bottom: 1px solid var(--pb-border);
+  padding: 0.7rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.pb-topbar h1 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+}
+
+.pb-sidebar-toggle {
+  display: none;
+  border: none;
+  background: transparent;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--pb-text);
+}
+
+.pb-content {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+@media (max-width: 900px) {
+  .pb-sidebar {
+    position: fixed;
+    left: 0;
+    transform: translateX(-100%);
+    box-shadow: var(--pb-shadow);
+  }
+  .pb-sidebar.pb-open {
+    transform: translateX(0);
+  }
+  .pb-sidebar-toggle {
+    display: inline-block;
+  }
+  .pb-content {
+    padding: 1rem;
+  }
+}
+
+/*
+ * Panel lateral que se contrae a solo íconos tras un rato sin usarlo (ver
+ * inicializarSidebarAutocontraible() en app.js) — solo en pantallas de
+ * escritorio; en móvil el panel sigue siendo el menú deslizable de arriba,
+ * sin tocar. <html> lleva la clase pb-sidebar-rail (puesta por head.php
+ * antes de pintar, y luego por app.js), no el propio <aside>, así CSS y JS
+ * comparten un único interruptor.
+ */
+@media (min-width: 901px) {
+  .pb-sidebar-pin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.4rem 0;
+    border: none;
+    background: transparent;
+    color: #8b8fb8;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .pb-sidebar-pin:hover,
+  .pb-sidebar-pin:focus-visible {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .pb-sidebar-pin i {
+    transition: transform 0.2s ease;
+  }
+
+  html.pb-sidebar-rail .pb-sidebar {
+    width: 68px;
+  }
+
+  html.pb-sidebar-rail .pb-sidebar-pin i {
+    transform: rotate(180deg);
+  }
+
+  html.pb-sidebar-rail .pb-sidebar-brand-text,
+  html.pb-sidebar-rail .pb-nav-link span,
+  html.pb-sidebar-rail .pb-sidebar-user-info,
+  html.pb-sidebar-rail .pb-logout-btn span {
+    max-width: 0;
+    opacity: 0;
+  }
+
+  html.pb-sidebar-rail .pb-sidebar-brand {
+    justify-content: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  html.pb-sidebar-rail .pb-nav-link {
+    justify-content: center;
+    gap: 0;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+
+  html.pb-sidebar-rail .pb-sidebar-user {
+    justify-content: center;
+  }
+
+  /* La insignia de "hay actualización" no desaparece contraído: se vuelve un puntito sobre el ícono. */
+  html.pb-sidebar-rail #pb-badge-actualizacion,
+  html.pb-sidebar-rail #pb-badge-vencimientos {
+    position: absolute;
+    top: 4px;
+    right: 12px;
+    width: 8px;
+    height: 8px;
+    min-width: 0;
+    padding: 0;
+    font-size: 0;
+    border-radius: 50%;
+  }
+}
+
+/* ---------- Tarjetas / componentes ---------- */
+.pb-card {
+  background: var(--pb-surface);
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  box-shadow: var(--pb-shadow);
+}
+
+.pb-card-body {
+  padding: 1rem 1.25rem;
+}
+
+.pb-stat {
+  background: var(--pb-surface);
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.pb-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pb-primary-light);
+  color: var(--pb-primary);
+  flex-shrink: 0;
+}
+
+.pb-stat-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.pb-stat-label {
+  font-size: 0.78rem;
+  color: var(--pb-text-muted);
+}
+
+.btn-primary {
+  background-color: var(--pb-primary);
+  border-color: var(--pb-primary);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--pb-primary-dark);
+  border-color: var(--pb-primary-dark);
+}
+
+.pb-stock-bajo {
+  background-color: #fef2f2 !important;
+}
+
+/* ---------- Tablas compactas ---------- */
+/* Columna que se queda visible al hacer scroll de un formulario largo al
+   lado (ej. catálogo de productos junto al formulario de Registro) — el
+   top coincide con la altura de .pb-topbar para que no quede tapada por
+   la barra de arriba, que también es sticky. align-self:flex-start es
+   necesario porque el .row de Bootstrap es flex con stretch por defecto:
+   sin esto, la columna ocupa toda la altura del row y sticky no tiene
+   margen para "pegarse" al hacer scroll. */
+.pb-columna-sticky {
+  position: sticky;
+  top: 76px;
+  align-self: flex-start;
+}
+
+.pb-table-wrap {
+  max-height: 480px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+}
+
+.pb-table-wrap table {
+  margin-bottom: 0;
+}
+
+.pb-table-wrap thead th {
+  position: sticky;
+  top: 0;
+  background: var(--pb-surface);
+  z-index: 1;
+  box-shadow: 0 1px 0 var(--pb-border);
+}
+
+.pb-table-compact th,
+.pb-table-compact td {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.83rem;
+  vertical-align: middle;
+}
+
+.pb-table-compact .badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+/* Columnas extra del catálogo de productos ("Ver datos completos") — se ocultan con una
+   clase en la tabla, no una por celda, para que sobrevivan a que la tabla se vuelva a
+   dibujar al cambiar de página o buscar. */
+#tablaProductos.pb-cols-extra-ocultas .pb-col-extra {
+  display: none;
+}
+
+/* Disparador de orden/filtro tipo Excel en cada encabezado — solo tiene sentido con
+   "Ver datos completos" activo (ahí se cargó el catálogo completo en el navegador),
+   así que se oculta junto con las columnas extra. */
+.pb-th-filtro {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.pb-th-filtro-btn {
+  border: none;
+  background: transparent;
+  color: var(--pb-text-muted);
+  padding: 0;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pb-th-filtro-btn:hover {
+  color: var(--pb-text);
+}
+
+.pb-th-filtro-btn.pb-th-filtro-activo {
+  color: var(--pb-primary);
+}
+
+/* Variante de pb-btn-icon con ancho libre — para el botón "Limpiar filtros" del
+   catálogo, que además del ícono necesita mostrar un contador (ej. "3"). */
+.pb-btn-icon-ancho-libre {
+  width: auto;
+  min-width: 30px;
+  padding: 0 0.5rem;
+  gap: 0.25rem;
+}
+
+#tablaProductos.pb-cols-extra-ocultas .pb-th-filtro-btn {
+  display: none;
+}
+
+.pb-panel-filtro {
+  position: fixed;
+  z-index: 2000;
+  width: 230px;
+  background: var(--pb-surface);
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  padding: 0.6rem;
+}
+
+.pb-panel-filtro-valores {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* Vista completa del catálogo ("Ver datos completos"): se quita el recuadro de tarjeta y
+   se estira la tabla al alto disponible de la pantalla, en vez de quedar en una caja
+   chica con scroll corto desperdiciando el resto de la pantalla. */
+body.pb-vista-completa-activa .pb-content {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+body.pb-vista-completa-activa #colCatalogoProductos .pb-card {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+body.pb-vista-completa-activa #colCatalogoProductos .pb-card-body {
+  padding: 0.5rem 0.25rem;
+}
+
+body.pb-vista-completa-activa #colCatalogoProductos .pb-table-wrap {
+  max-height: calc(100vh - 165px);
+}
+
+.pb-fila-inactiva {
+  opacity: 0.6;
+}
+
+/* ---------- Botones de acción en filas (editar/eliminar/etc.) ----------
+   Reemplaza el patrón viejo de botón cuadrado con borde de color
+   (btn-outline-warning/btn-outline-danger) — icono flotante, sin borde,
+   que solo se tiñe de color al pasar el mouse. Mismo patrón visual en
+   todas las tablas de administración (clientes, proveedores, usuarios,
+   productos, promociones, fidelización, mesas, facturas). */
+.pb-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--pb-text-muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.pb-btn-icon + .pb-btn-icon {
+  margin-left: 0.15rem;
+}
+
+.pb-btn-icon:hover,
+.pb-btn-icon:focus {
+  color: var(--pb-text);
+  background: var(--pb-bg);
+}
+
+.pb-btn-icon-edit:hover,
+.pb-btn-icon-edit:focus {
+  color: var(--pb-primary);
+  background: var(--pb-primary-light);
+}
+
+.pb-btn-icon-delete:hover,
+.pb-btn-icon-delete:focus {
+  color: var(--pb-danger);
+  background: #fef2f2;
+}
+
+.pb-btn-icon-warn:hover,
+.pb-btn-icon-warn:focus {
+  color: var(--pb-warning);
+  background: #fffbeb;
+}
+
+/* Semaforización de vencimientos: a diferencia de los demás iconos de fila, estos se
+   quedan rellenos siempre (no solo en hover) porque son el indicador visual de estado —
+   relleno de color + icono blanco para que se note de un vistazo. */
+.pb-btn-icon-venc-activo,
+.pb-btn-icon-venc-amarillo,
+.pb-btn-icon-venc-rojo {
+  color: #fff;
+}
+
+.pb-btn-icon-venc-activo {
+  background: var(--pb-primary);
+}
+
+.pb-btn-icon-venc-amarillo {
+  background: var(--pb-warning);
+}
+
+.pb-btn-icon-venc-rojo {
+  background: var(--pb-danger);
+}
+
+.pb-btn-icon-venc-activo:hover,
+.pb-btn-icon-venc-activo:focus {
+  color: #fff;
+  background: var(--pb-primary-dark);
+}
+
+.pb-btn-icon-venc-amarillo:hover,
+.pb-btn-icon-venc-amarillo:focus,
+.pb-btn-icon-venc-rojo:hover,
+.pb-btn-icon-venc-rojo:focus {
+  color: #fff;
+  filter: brightness(0.9);
+}
+
+/* ---------- Etiquetas de estado (pill) ----------
+   Reemplaza el texto plano "Activo"/"Inactivo" por una píldora con punto
+   de color — mismo patrón que ya usan la mayoría de paneles modernos. */
+.pb-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pb-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.pb-pill-activo {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.pb-pill-inactivo {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* ---------- Cuadrícula de productos rápidos (Ventas) ---------- */
+.pb-grid-productos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem;
+}
+
+.pb-tile-producto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-height: 76px;
+  padding: 0.5rem 0.4rem;
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  background: var(--pb-surface);
+  color: var(--pb-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.pb-tile-producto:hover,
+.pb-tile-producto:focus {
+  border-color: var(--pb-primary);
+  background: var(--pb-primary-light);
+}
+
+.pb-tile-producto small {
+  font-weight: 400;
+  color: var(--pb-text-muted);
+}
+
+/* ---------- Lista arrastrable (ej. orden de la cuadrícula de ventas) ---------- */
+.pb-fila-arrastrable {
+  position: relative;
+  cursor: grab;
+}
+
+.pb-fila-arrastrable.pb-arrastrando {
+  opacity: 0.4;
+}
+
+.pb-tile-grip {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  color: var(--pb-text-muted);
+}
+
+.pb-tile-quitar {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--pb-surface);
+  color: var(--pb-danger);
+  font-size: 0.65rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  cursor: pointer;
+}
+
+.pb-tile-producto:hover .pb-tile-quitar {
+  opacity: 1;
+}
+
+/* ---------- Categorías de la cuadrícula (config) y botones de categoría (Ventas) ---------- */
+.pb-categoria-cuadricula {
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  background: var(--pb-surface);
+  overflow: hidden;
+}
+
+.pb-categoria-cuadricula-header:hover {
+  background: var(--pb-primary-light);
+}
+
+.pb-btn-categoria {
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  background: var(--pb-surface);
+  color: var(--pb-text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.pb-btn-categoria:hover {
+  border-color: var(--pb-primary);
+  background: var(--pb-primary-light);
+}
+
+.pb-btn-categoria.pb-btn-categoria-activa {
+  border-color: var(--pb-primary);
+  background: var(--pb-primary);
+  color: #fff;
+}
+
+/* ---------- Login ---------- */
+.pb-login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--pb-sidebar-bg), var(--pb-primary-dark));
+  padding: 1rem;
+}
+
+.pb-login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--pb-surface);
+  border-radius: 1rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  padding: 2.25rem 2rem;
+}
+
+.pb-login-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--pb-primary-light);
+  color: var(--pb-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.pb-login-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Aviso de actualización crítica forzada ---------- */
+.pb-banner-actualizacion-forzada {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2100;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #fff;
+  background: #b91c1c;
+}
+
+/* ---------- Recuadro de progreso de actualización (Configuración) ---------- */
+.pb-log-actualizacion {
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--pb-border, #dee2e6);
+  border-radius: var(--pb-radius, 6px);
+  background: #f8f9fa;
+}
+
+.pb-log-actualizacion-lineas {
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 0.5rem 0.75rem;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+/* ---------- Aviso de función no contratada (Configuración) ---------- */
+.pb-upsell {
+  border-left: 4px solid var(--pb-secondary);
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--pb-radius, 6px);
+  padding: 0.9rem 1rem;
+}
+
+.pb-upsell-titulo {
+  color: var(--pb-secondary-dark);
+}
+
+/* ---------- Toasts ---------- */
+.pb-toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pb-toast {
+  min-width: 240px;
+  max-width: 340px;
+  padding: 0.75rem 1rem;
+  border-radius: var(--pb-radius);
+  color: #fff;
+  box-shadow: var(--pb-shadow);
+  font-size: 0.9rem;
+  animation: pb-toast-in 0.15s ease-out;
+}
+
+.pb-toast-success { background: var(--pb-success); }
+.pb-toast-error { background: var(--pb-danger); }
+.pb-toast-info { background: var(--pb-primary); }
+
+@keyframes pb-toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Ventas (POS) ---------- */
+.pb-resultado-activo {
+  background-color: var(--pb-primary-light) !important;
+  border-color: var(--pb-primary) !important;
+}
+
+.pb-scan-input {
+  font-size: 1.1rem;
+  padding: 0.65rem 0.9rem;
+}
+
+.pb-cart-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.pb-cart-item.pb-cart-item-warn {
+  background-color: #fff7ed;
+}
+
+.pb-cart-item-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pb-cart-item-nombre {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pb-cart-item-meta {
+  font-size: 0.72rem;
+  color: var(--pb-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pb-cart-item-presentacion {
+  flex: 0 0 auto;
+  max-width: 92px;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.35rem;
+}
+
+.pb-cart-item-qty {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.pb-cart-item-qty-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  line-height: 1;
+  font-size: 0.85rem;
+}
+
+.pb-cart-item-qty-input {
+  width: 38px;
+  height: 22px;
+  padding: 0 0.2rem;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.pb-cart-item-total {
+  flex: 0 0 auto;
+  min-width: 62px;
+  text-align: right;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.pb-cart-item-peso {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pb-cart-total {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+/* ---------- Cuadrícula de mesas ---------- */
+.pb-mesa-tile {
+  position: relative;
+  min-width: 92px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.pb-mesa-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+.pb-mesa-tile-libre {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+.pb-mesa-tile-ocupada {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+.pb-mesa-tile-actual {
+  outline: 2px solid var(--pb-primary);
+  outline-offset: 1px;
+}
+.pb-mesa-tile-cancelar {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: #dc3545;
+  color: #fff;
+  font-size: 0.7rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pb-mesa-leyenda {
+  color: var(--pb-text-muted);
+}
+.pb-mesa-punto {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.pb-mesa-punto.pb-mesa-libre {
+  background: #10b981;
+}
+.pb-mesa-punto.pb-mesa-ocupada {
+  background: #3b82f6;
+}
+
+.pb-ticket {
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+}
+
+/* Vista previa en pantalla de un ticket (modal de la venta / de la comanda):
+   como una tira de papel, con el mismo ancho que va a tener impreso, texto
+   en negro y el mismo tamaño de letra de la térmica — así lo que se ve es lo
+   que sale (incluido el QR al final). */
+.pb-ticket-vista {
+  background: #fff;
+  color: #000;
+  border: 1px solid var(--pb-border);
+  border-radius: 6px;
+  padding: 0.75rem 0.6rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  margin: 0 auto;
+  overflow-wrap: anywhere;
+  /* Con formato A4 el ticket no tiene ancho fijo: en la vista previa se
+     limita a una tira angosta (el modal no se ensancha), sin cambiar cómo
+     se imprime. Los formatos térmicos ya traen su ancho en mm y caben. */
+  width: 100%;
+  max-width: 440px;
+}
+.pb-ticket-vista .text-muted,
+.pb-ticket-vista .small,
+.pb-ticket-vista small {
+  color: #000 !important;
+}
+.pb-ticket-vista.pb-ticket-termica-58,
+.pb-ticket-vista.pb-ticket-termica-80 {
+  font-size: 11px;
+  line-height: 1.3;
+  /* El ancho en mm es el del PAPEL: el relleno de la tarjeta va por fuera, así
+     lo que se ve dentro mide exactamente lo que va a medir el ticket impreso
+     (sin esto la regla de la hoja de prueba parecía desbordarse). */
+  box-sizing: content-box;
+}
+
+@media print {
+  /* Oculta todo por defecto y solo muestra .pb-print-area — con
+     visibility (no display) para que no importe qué tan anidado esté
+     dentro de .pb-app/.pb-main/un modal/etc., y luego se reposiciona en
+     absoluto para que ocupe la hoja completa en vez de dejar el hueco
+     en blanco de donde estaba. */
+  body * {
+    visibility: hidden;
+  }
+  .pb-print-area,
+  .pb-print-area * {
+    visibility: visible;
+  }
+  .pb-print-hide,
+  .pb-print-hide * {
+    visibility: hidden !important;
+  }
+  .pb-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .pb-ticket-termica-58,
+  .pb-ticket-termica-80 {
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  .pb-ticket-termica-58 {
+    width: 54mm;
+  }
+  .pb-ticket-termica-80 {
+    width: 76mm;
+  }
+
+  /* Una impresora térmica solo entiende negro o blanco: cualquier gris
+     (.text-muted, .small en gris) o trazo fino sale "clarito" o cortado —
+     así se veían los toppings de la factura. En papel todo va en negro
+     puro, sin achicar el texto secundario, y en térmica se engrosa un
+     poco el trazo para que la tipografía fina no se rompa. */
+  .pb-ticket,
+  .pb-ticket *,
+  .pb-print-area,
+  .pb-print-area * {
+    color: #000 !important;
+  }
+  .pb-print-area .small,
+  .pb-print-area small {
+    font-size: 0.95em !important;
+  }
+  /* Las líneas separadoras (<hr>) vienen en gris tenue: en térmica
+     desaparecen o salen entrecortadas. */
+  .pb-print-area hr {
+    border-top: 1px solid #000 !important;
+    opacity: 1 !important;
+  }
+  .pb-ticket-termica-58,
+  .pb-ticket-termica-80 {
+    -webkit-text-stroke: 0.35px #000;
+  }
+
+  /* Al imprimir con el diálogo del sistema desde un botón concreto (ver
+     imprimirConDialogo en app.js), solo debe salir ESE documento: sin esto,
+     si hay otro .pb-print-area visible (ej. la vista previa de la comanda
+     abierta detrás), los dos se imprimen encimados en la misma hoja. */
+  body.pb-imprimiendo-una .pb-print-area {
+    display: none !important;
+  }
+  body.pb-imprimiendo-una #pb-impresion-temporal {
+    display: block !important;
+  }
+}
+
+/* En pantalla el contenedor temporal de impresión nunca se ve. */
+#pb-impresion-temporal {
+  display: none;
+}
+
+
+/* ---------- Barras de desplazamiento con los colores de la empresa ---------- */
+/* Delgadas y redondeadas: pista en el tono claro del color principal y la barra en el color principal.
+   La barra del panel lateral (oscura) tiene sus propias reglas, más específicas, arriba. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--pb-primary-light);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pb-primary);
+  border-radius: 10px;
+  border: 2px solid var(--pb-primary-light);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pb-primary-dark);
+}
+
+/* ---------- Ventas: el scroll es solo del carrito ---------- */
+.pb-carrito-lista {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+/* En escritorio la pantalla de Ventas ocupa justo la ventana (la página no se desplaza): las mesas, los
+   productos y el escáner se quedan quietos, la lista del carrito absorbe el espacio que sobre y hace su
+   propio scroll, y el cobro (total, pagos, confirmar) siempre queda a la vista. Si la ventana es muy
+   baja y no cabe ni así, se desplaza solo la columna del carrito, nunca toda la página. */
+@media (min-width: 992px) {
+  html.pb-pagina-ventas,
+  html.pb-pagina-ventas body {
+    height: 100vh;
+    overflow: hidden;
+  }
+  html.pb-pagina-ventas .pb-app,
+  html.pb-pagina-ventas .pb-main {
+    height: 100vh;
+    min-height: 0;
+  }
+  html.pb-pagina-ventas .pb-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    padding-bottom: 1rem;
+  }
+  html.pb-pagina-ventas .pb-ventas-fila {
+    --bs-gutter-y: 0;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    min-height: 0;
+  }
+  html.pb-pagina-ventas .pb-ventas-izq {
+    min-height: 0;
+    overflow-y: auto;
+  }
+  html.pb-pagina-ventas .pb-ventas-der {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  html.pb-pagina-ventas .pb-ventas-card {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  html.pb-pagina-ventas .pb-ventas-card > .pb-card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  html.pb-pagina-ventas .pb-carrito-lista {
+    flex: 1 1 160px;
+    min-height: 96px;
+    max-height: none;
+  }
+  html.pb-pagina-ventas .pb-ventas-cobro {
+    flex: 0 0 auto;
+  }
+  /* Los botones de acción (guardar mesa / confirmar venta) se quedan pegados abajo aunque la columna del
+     carrito tenga que desplazarse (ventana baja). */
+  html.pb-pagina-ventas .pb-ventas-acciones {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background: var(--pb-surface);
+    padding: 0.5rem 0 0.25rem;
+    margin-top: 0.25rem;
+    box-shadow: 0 -8px 10px -6px rgba(16, 17, 27, 0.16);
+  }
+  html.pb-pagina-ventas .pb-ventas-acciones > :first-child {
+    margin-top: 0 !important;
+  }
+  /* Carrito vacío (p. ej. justo después de guardar una mesa): la tarjeta se ajusta a su contenido en vez de
+     estirarse por toda la altura dejando el lado derecho en blanco. */
+  html.pb-pagina-ventas .pb-ventas-card.pb-ventas-card-vacio {
+    flex: 0 1 auto;
+  }
+  html.pb-pagina-ventas .pb-ventas-card-vacio .pb-carrito-lista {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+}

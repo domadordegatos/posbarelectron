@@ -1,0 +1,56 @@
+appId: com.enesoft.posbar
+productName: EneSoft POS
+copyright: Copyright © EneSoft
+
+directories:
+  output: dist
+  buildResources: build
+
+# main.js, preload.js y package.json van dentro del asar (código de Electron).
+# /app (PHP) y /php (binario portable) NO pueden ir dentro del asar porque
+# el ejecutable de PHP necesita correr desde el disco real, no desde el
+# archivo empaquetado — por eso van como extraResources.
+files:
+  - main.js
+  - preload.js
+  - cifrado-bd.js
+  - package.json
+  - node_modules/**/*
+
+extraResources:
+  - from: app
+    to: app
+  - from: php
+    to: php
+  - from: vcredist
+    to: vcredist
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+  artifactName: ${productName}-Setup-${version}.${ext}
+
+nsis:
+  oneClick: false
+  # El paso de build/installer.nsh que instala el Visual C++ Redistributable
+  # (necesario para que php.exe arranque — ver scripts/download-vcredist.js)
+  # requiere permisos de administrador. El modo "solo para mí" del
+  # instalador NO pide esos permisos, así que ese paso fallaba en silencio
+  # ahí y el error de PHP volvía a aparecer aunque el instalador terminara
+  # "bien". Con perMachine:true se quita esa opción — el instalador siempre
+  # pide permisos de administrador (un solo modo, sin pantalla de elegir).
+  perMachine: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: EneSoft POS
+
+# Auto-actualización: "generic" sirve cualquier carpeta estática con
+# latest.yml + el instalador. Directorio real en el servidor (ver README.md).
+publish:
+  provider: generic
+  url: https://pos.nncoms.com/actualizaciones/
+  channel: latest

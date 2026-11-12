@@ -1,0 +1,18 @@
+node_modules/
+php/
+vcredist/
+dist/
+datos-dev/
+*.zip
+*.log
+.DS_Store
+
+# Secreto real del panel de superadministrador (el mismo para todas las instalaciones) — nunca
+# al repo, sobre todo siendo público. El código funciona igual sin este archivo (SuperAdmin.php
+# simplemente reporta el panel como "no configurado"); ver superadmin_secreto.example.php.
+app/modelo/superadmin_secreto.php
+
+# Scripts sueltos de diagnóstico/prueba en el equipo de desarrollo, no parte de la app.
+scratch_diagnostico_productos.php
+test-respaldo-temporal.js
+scratch_test_toggle/
